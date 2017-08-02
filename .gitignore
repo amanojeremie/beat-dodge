@@ -1,0 +1,5 @@
+*.layout
+*.depend
+*.mp3
+obj
+bin
