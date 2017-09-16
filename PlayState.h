@@ -1,7 +1,7 @@
 #ifndef PLAYSTATE_H_INCLUDED
 #define PLAYSTATE_H_INCLUDED
 
-#include <SFML/Graphics.hpp>
+#include "SFML/Graphics.hpp"
 #include "GameState.h"
 
 class SoundManager;
@@ -29,11 +29,12 @@ struct Player {
 
 class PlayState : public GameState {
 private:
+	unsigned int stackSize;
 	Player player;
 	std::vector<Beat> beats;
 	void spawnBeat(int i);
-	bool collideBeat(std::vector<Beat>::iterator beat);
-	void cleanupBeat(std::vector<Beat>::iterator beat);
+	bool collideBeat(const Beat& beat) const;
+	bool cleanupBeat(const Beat& beat) const;
 public:
 	void init();
 	void update(GameManager& game, WindowManager& window, SoundManager& sound, float delta);

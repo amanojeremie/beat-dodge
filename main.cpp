@@ -1,4 +1,4 @@
-#include <SFML/Graphics.hpp>
+#include "SFML/Graphics.hpp"
 #include "mpg123.h"
 #include "WindowManager.h"
 #include "GameManager.h"
@@ -14,7 +14,7 @@ int main()
 	windowManager.init();
 	soundManager.init();
 	gameManager.init();
-	gameManager.pushState(new PlayState());
+	gameManager.pushState(new PlayState{});
 
 	sf::Clock frameClock;
 	frameClock.restart();
@@ -26,6 +26,7 @@ int main()
 		windowManager.finalizeRender();
 		gameManager.render(windowManager);
 	}
+	gameManager.popState();
 
     return 0;
 }

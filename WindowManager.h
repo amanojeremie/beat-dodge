@@ -4,18 +4,18 @@
 #include "SFML/Graphics.hpp"
 
 class WindowManager {
-protected:
-	sf::RenderTexture pass;
-	std::vector<sf::Shader*> shaders;
-	sf::RenderTexture gameView;
-	sf::RenderWindow gameWindow;
-public:
-	void init();
-	void beginRender();
-	void draw(const sf::Drawable& drawanle);
-	void finalizeRender();
-	bool isOpen();
-	sf::Vector2i getMousePosition();
+	private:
+		sf::RenderTexture pass;
+		std::vector<sf::Shader*> shaders;
+		sf::RenderTexture gameView;
+		sf::RenderWindow gameWindow;
+	public:
+		void init();
+		void beginRender();
+		void draw(const sf::Drawable& drawable);
+		void finalizeRender();
+		bool isOpen() const;
+		sf::Vector2i getMousePosition() const;
 };
 
 #endif // WINDOWMANAGER_H_INCLUDED

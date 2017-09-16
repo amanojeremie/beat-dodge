@@ -26,11 +26,11 @@ void WindowManager::finalizeRender() {
 	gameWindow.display();
 }
 
-bool WindowManager::isOpen() {
+bool WindowManager::isOpen() const {
 	return gameWindow.isOpen();
 }
 
-sf::Vector2i WindowManager::getMousePosition() {
+sf::Vector2i WindowManager::getMousePosition() const {
 	return sf::Mouse::getPosition(gameWindow);
 }
 

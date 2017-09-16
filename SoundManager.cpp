@@ -60,7 +60,7 @@ bool Mp3::openFromFile(const std::string& fileName, size_t fftChunkSize) {
 		std::cerr << "Failed to reserve memory for " << fileName << std::endl;
 		return false;
 	}
-	this->fftChunkSize = fftChunkSize;
+	fftChunkSize = fftChunkSize;
 	initialize(channels, rate);
 	return true;
 }
@@ -94,21 +94,23 @@ void Mp3::onSeek(sf::Time timeOffset) {
 bool Mp3::fillBuffer(std::vector<double>& inputVector) {
 	sf::Lock lock(soundMutex);;
 	if(preprocSamples.size() >= fftChunkSize * 2) {
-		dComplex* preFFTSamples = (dComplex*) malloc(sizeof(dComplex) * fftChunkSize);
+		dComplex* preFFTSamples = new dComplex[fftChunkSize];
 		for(std::size_t i = 0; i < fftChunkSize * 2; i += 2) {
 			preFFTSamples[i / 2] = dComplex(((preprocSamples[i] + preprocSamples[i + 1]) / (32767.0 * 2)), 0.0);
 		}
 		preprocSamples.erase(preprocSamples.begin(), preprocSamples.begin() + fftChunkSize * 2);
 		dComplex* postFFTSamples = FFTSimple(preFFTSamples, fftChunkSize);
 		for(size_t i = 0; i < fftChunkSize; i++) {
-			inputVector.insert(inputVector.begin(), std::abs(postFFTSamples[i]) * std::abs(postFFTSamples[i]));
+			inputVector.insert(inputVector.begin(), std::norm(postFFTSamples[i]));
 		}
+		delete preFFTSamples;
+		delete postFFTSamples;
 		return true;
 	}
 	return false;
 }
 
-void Mp3::FFTCalculate(dComplex* x, int N, int skip, dComplex* X, dComplex* D, dComplex* twiddles) {
+void Mp3::FFTCalculate(dComplex* x, int N, int skip, dComplex* X, dComplex* D, dComplex* twiddles) const {
 	dComplex* E = D + N/2;
 	int k;
 
@@ -133,8 +135,8 @@ void Mp3::FFTCalculate(dComplex* x, int N, int skip, dComplex* X, dComplex* D, d
 	}
 }
 
-dComplex* Mp3::FFTTwiddleFactors(int N) {
-	dComplex* twiddles = (dComplex*) malloc(sizeof(dComplex) * N / 2);
+dComplex* Mp3::FFTTwiddleFactors(int N) const {
+	dComplex* twiddles = new dComplex[N / 2];
 	int k;
 
 	for(k = 0; k < N / 2; k++)
@@ -145,13 +147,13 @@ dComplex* Mp3::FFTTwiddleFactors(int N) {
 	return twiddles;
 }
 
-dComplex* Mp3::FFTSimple(dComplex* x, int N) {
-	dComplex* ret = (dComplex*) malloc(sizeof(dComplex) * N);
-	dComplex* scratch = (dComplex*) malloc(sizeof(dComplex) * N);
+dComplex* Mp3::FFTSimple(dComplex* x, int N) const {
+	dComplex* ret = new dComplex[N];
+	dComplex* scratch = new dComplex[N];
 	dComplex* twiddles = FFTTwiddleFactors(N);
 	FFTCalculate(x, N, 1, ret, scratch, twiddles);
-	free(twiddles);
-	free(scratch);
+	delete twiddles;
+	delete scratch;
 	return ret;
 }
 
@@ -215,11 +217,11 @@ void SoundManager::update() {
 	}
 }
 
-bool SoundManager::isFrameBeat() {
+bool SoundManager::isFrameBeat() const{
 	return frameBeat;
 }
 
-bool SoundManager::getBandBeat(int band) {
+bool SoundManager::getBandBeat(int band) const {
 	if(band >= 0 && band <= 63) {
 		return frameBandBeats[band];
 	}
