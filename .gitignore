@@ -1,7 +1,4 @@
-*.layout
-*.depend
 *.mp3
 obj
-bin
 *.o
 beat-dodge

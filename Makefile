@@ -1,23 +1,22 @@
 CC = g++
 CFLAGS = -g -Wall -std=c++11
+vpath %.h src
+vpath %.cpp src
+OBJDIR = obj
 LIBS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -lmpg123
+OBJECTS = $(addprefix $(OBJDIR)/, main.o WindowManager.o SoundManager.o GameManager.o PlayState.o)
 
 default: beat-dodge
 
-beat-dodge: main.o WindowManager.o SoundManager.o GameManager.o PlayState.o
-	$(CC) $(CFLAGS) -o beat-dodge main.o WindowManager.o SoundManager.o GameManager.o PlayState.o $(LIBS)
+beat-dodge: $(OBJDIR) $(OBJECTS)
+	$(CC) $(CFLAGS) -o beat-dodge $(OBJECTS) $(LIBS)
 
-main.o: main.cpp WindowManager.h SoundManager.h GameManager.h PlayState.h
-	$(CC) $(CFLAGS) -c main.cpp
+$(OBJDIR): 
+	mkdir -p $(OBJDIR)
 
-WindowManager.o: WindowManager.cpp WindowManager.h
-	$(CC) $(CFLAGS) -c WindowManager.cpp
+$(OBJDIR)/%.o: %.cpp
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-SoundManager.o: SoundManager.cpp SoundManager.h
-	$(CC) $(CFLAGS) -c SoundManager.cpp
-
-GameManager.o: GameManager.cpp GameManager.h GameState.h
-	$(CC) $(CFLAGS) -c GameManager.cpp
-
-PlayState.o: PlayState.cpp PlayState.h GameState.h WindowManager.h SoundManager.h GameManager.h
-	$(CC) $(CFLAGS) -c PlayState.cpp
+.PHONY: clean
+clean:
+	rm -r $(OBJDIR)/*.o
