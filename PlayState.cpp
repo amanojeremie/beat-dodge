@@ -5,11 +5,21 @@
 #include "WindowManager.h"
 #include "SoundManager.h"
 
+static const double PI =  3.141592653589793238460;
+static const double DEGRAG = 180/PI;
+static const float FIELD_WIDTH = 1280.f;
+static const float FIELD_HEIGHT = 720.f;
+static const float PLAYER_RADIUS = 163.f;
+static const float CIRCLE_RADIUS = 8.f;
+static const float BEAT_VELOCITY = 163.f;
+static const int BEAT_RESERVE = 512;
+static const int BAND_COUNT = 64;
+
 void PlayState::init() {
 	stackSize = 0;
-	beats.reserve(512);
+	beats.reserve(BEAT_RESERVE);
 
-	player.shape.setRadius(8.f);
+	player.shape.setRadius(CIRCLE_RADIUS);
 	player.shape.setFillColor(sf::Color::Magenta);
 }
 
@@ -35,21 +45,22 @@ void PlayState::update(GameManager& game, WindowManager& window, SoundManager& s
 		}
 	}
 
-	for(int i = 0; i < 64; i++) {
+	for(int i = 0; i < BAND_COUNT; i++) {
 		if(sound.getBandBeat(i)) {
 			spawnBeat(i);
 		}
 	}
 
-	float mouseAngle = atan2f(window.getMousePosition().y - 360.f, window.getMousePosition().x - 640.f);
-	player.position.x = 640.f + cosf(mouseAngle) * 163.f;
-	player.position.y = 360.f + sinf(mouseAngle) * 163.f;
+	float mouseAngle = atan2f(window.getMousePosition().y - FIELD_HEIGHT / 2.f, 
+		window.getMousePosition().x - FIELD_WIDTH / 2.f);
+	player.position.x = FIELD_WIDTH / 2.f + cosf(mouseAngle) * PLAYER_RADIUS;
+	player.position.y = FIELD_HEIGHT / 2.f + sinf(mouseAngle) * PLAYER_RADIUS;
 }
 
 bool PlayState::collideBeat(const Beat& beat) const {
 	if((beat.position.x - player.position.x) * (beat.position.x - player.position.x) +
 		(beat.position.y - player.position.y) * (beat.position.y - player.position.y)
-		<= 64.f) {
+		<= CIRCLE_RADIUS * CIRCLE_RADIUS) {
 			return true;
 		}
 	else {
@@ -58,7 +69,10 @@ bool PlayState::collideBeat(const Beat& beat) const {
 }
 
 bool PlayState::cleanupBeat(const Beat& beat) const {
-	if(beat.position.x <= -8.f || beat.position.x >= 1288.f || beat.position.y <= -8.f || beat.position.y >= 728.f) {
+	if(beat.position.x <= 0.f - CIRCLE_RADIUS
+		|| beat.position.x >= FIELD_WIDTH + CIRCLE_RADIUS
+		|| beat.position.y <= 0.f - CIRCLE_RADIUS 
+		|| beat.position.y >= FIELD_HEIGHT + CIRCLE_RADIUS) {
 		return true;
 	}
 	else {
@@ -71,10 +85,10 @@ void PlayState::spawnBeat(int i) {
 	newBeat.band = i;
 	newBeat.shape.setFillColor(sf::Color::Cyan);
 	newBeat.shape.setRadius(8.f);
-	newBeat.position.x = 1280.f / 2.f;
-	newBeat.position.y = 720.f / 2.f;
-	newBeat.velocity.x = cosf((i / 64.f) * 2 * PI) * 163.f;
-	newBeat.velocity.y = sinf((i / 64.f) * 2 * PI) * 163.f;
+	newBeat.position.x = FIELD_WIDTH / 2.f;
+	newBeat.position.y = FIELD_HEIGHT / 2.f;
+	newBeat.velocity.x = cosf(((float) i / BAND_COUNT) * 2 * PI) * BEAT_VELOCITY;
+	newBeat.velocity.y = sinf(((float) i / BAND_COUNT) * 2 * PI) * BEAT_VELOCITY;
 	beats.push_back(newBeat);
 
 	if(beats.capacity() != stackSize) {

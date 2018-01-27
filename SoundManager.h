@@ -1,10 +1,6 @@
 #ifndef SOUNDMANAGER_H_INCLUDED
 #define SOUNDMANAGER_H_INCLUDED
 
-#ifndef PI
-#define PI 3.141592653589793238460
-#endif
-
 #include <complex>
 #include <vector>
 #include "SFML/Audio.hpp"
@@ -45,8 +41,8 @@ class SoundManager {
 		std::vector< std::vector<double> > energyHistoryBuffer;
 		bool frameCalc;
 		bool frameBeat;
-		bool frameBandRise[64];
-		bool frameBandBeats[64];
+		std::vector<bool> frameBandRise;
+		std::vector<bool> frameBandBeats;
 	public:
 		void init(const std::string& fileName);
 		void update();

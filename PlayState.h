@@ -7,14 +7,6 @@
 class SoundManager;
 class WindowManager;
 
-#ifndef PI
-#define PI 3.141592653589793238460
-#endif
-
-#ifndef DEGRAG
-#define DEGRAG 180/PI
-#endif
-
 struct Beat {
 	sf::Vector2f position;
 	sf::Vector2f velocity;

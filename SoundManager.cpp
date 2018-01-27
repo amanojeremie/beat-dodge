@@ -1,7 +1,16 @@
 #include "SoundManager.h"
 #include <iostream>
 #include <math.h>
+#include <limits>
 #include "SFML/System.hpp"
+
+static const double PI =  3.141592653589793238460;
+static const int SUBBAND_COUNT = 64;
+static const int ENERGY_HISTORY_BUFFER = 47;
+static const int FFT_CHUNK_SIZE = 1024;
+static const int FFT_SAMPLE_PER_BAND = FFT_CHUNK_SIZE / SUBBAND_COUNT;
+static const double BEAT_FACTOR = 5.0;
+static const double MIN_ENERGY_FOR_BEAT = 0.01;
 
 Mp3::Mp3() : handle(NULL), bufferSize(0), buffer(0) {
 	int err = MPG123_OK;
@@ -96,7 +105,7 @@ bool Mp3::fillBuffer(std::vector<double>& inputVector) {
 	if(preprocSamples.size() >= fftChunkSize * 2) {
 		dComplex* preFFTSamples = new dComplex[fftChunkSize];
 		for(std::size_t i = 0; i < fftChunkSize * 2; i += 2) {
-			preFFTSamples[i / 2] = dComplex(((preprocSamples[i] + preprocSamples[i + 1]) / (32767.0 * 2)), 0.0);
+			preFFTSamples[i / 2] = dComplex(((preprocSamples[i] + preprocSamples[i + 1]) / (std::numeric_limits<short>::max() * 2.0)), 0.0);
 		}
 		preprocSamples.erase(preprocSamples.begin(), preprocSamples.begin() + fftChunkSize * 2);
 		dComplex* postFFTSamples = FFTSimple(preFFTSamples, fftChunkSize);
@@ -159,38 +168,40 @@ dComplex* Mp3::FFTSimple(dComplex* x, int N) const {
 
 
 void SoundManager::init(const std::string& fileName) {
-	gameSong.openFromFile(fileName, 1024);
+	gameSong.openFromFile(fileName, FFT_CHUNK_SIZE);
 	gameSong.play();
 
-	lastBandBuffer.resize(64, 0.0);
-	energyHistoryBuffer.resize(47, std::vector<double>(64, 0.0));
+	frameBandBeats.resize(SUBBAND_COUNT, false);
+	frameBandRise.resize(SUBBAND_COUNT, false);
+	lastBandBuffer.resize(SUBBAND_COUNT, 0.0);
+	energyHistoryBuffer.resize(ENERGY_HISTORY_BUFFER, std::vector<double>(SUBBAND_COUNT, 0.0));
 }
 
 void SoundManager::update() {
 	if(gameSong.fillBuffer(dCModBuffer)) {
 		frameCalc = true;
-		for(int i = 0; i < 64; i++)
+		for(int i = 0; i < SUBBAND_COUNT; i++)
 		{
 			double subInstantEnergy = 0;
-			for(std::vector<double>::iterator itor = dCModBuffer.begin() + (i * 16); itor < dCModBuffer.begin() + ((i + 1) * 16); itor++)
+			for(std::vector<double>::iterator itor = dCModBuffer.begin() + (i * FFT_SAMPLE_PER_BAND); itor < dCModBuffer.begin() + ((i + 1) * FFT_SAMPLE_PER_BAND); itor++)
 			{
 				subInstantEnergy += (*itor);
 			}
-			energyBandBuffer.insert(energyBandBuffer.begin(), (1.0 / 16.0) * subInstantEnergy);
+			energyBandBuffer.insert(energyBandBuffer.begin(), (1.0 / FFT_SAMPLE_PER_BAND) * subInstantEnergy);
 		}
-		for(int i = 0; i < 64; i++)
+		for(int i = 0; i < SUBBAND_COUNT; i++)
 		{
 			double energySum = 0;
-			for(int j = 0; j < 47; j++)
+			for(int j = 0; j < ENERGY_HISTORY_BUFFER; j++)
 			{
 				energySum += energyHistoryBuffer[j][i];
 			}
-			meanBandBuffer.insert(meanBandBuffer.begin(), (1.0 / 47.0) * energySum);
+			meanBandBuffer.insert(meanBandBuffer.begin(), (1.0 / ENERGY_HISTORY_BUFFER) * energySum);
 		}
 		frameBeat = false;
-		for(int i = 0; i < 64; i++)
+		for(int i = 0; i < SUBBAND_COUNT; i++)
 		{
-			if(energyBandBuffer[i] > 5 * meanBandBuffer[i] && energyBandBuffer[i] > 0.01)
+			if(energyBandBuffer[i] > BEAT_FACTOR * meanBandBuffer[i] && energyBandBuffer[i] > MIN_ENERGY_FOR_BEAT)
 			{
 				frameBandBeats[i] = false;
 				frameBandRise[i] = true;
@@ -222,7 +233,7 @@ bool SoundManager::isFrameBeat() const{
 }
 
 bool SoundManager::getBandBeat(int band) const {
-	if(band >= 0 && band <= 63) {
+	if(band >= 0 && band <= SUBBAND_COUNT - 1) {
 		return frameBandBeats[band];
 	}
 	else {
