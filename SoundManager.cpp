@@ -60,7 +60,7 @@ bool Mp3::openFromFile(const std::string& fileName, size_t fftChunkSize) {
 		std::cerr << "Failed to reserve memory for " << fileName << std::endl;
 		return false;
 	}
-	fftChunkSize = fftChunkSize;
+	Mp3::fftChunkSize = fftChunkSize;
 	initialize(channels, rate);
 	return true;
 }
@@ -158,8 +158,8 @@ dComplex* Mp3::FFTSimple(dComplex* x, int N) const {
 }
 
 
-void SoundManager::init() {
-	gameSong.openFromFile("song.mp3", 1024);
+void SoundManager::init(const std::string& fileName) {
+	gameSong.openFromFile(fileName, 1024);
 	gameSong.play();
 
 	lastBandBuffer.resize(64, 0.0);

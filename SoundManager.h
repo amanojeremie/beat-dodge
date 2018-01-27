@@ -48,7 +48,7 @@ class SoundManager {
 		bool frameBandRise[64];
 		bool frameBandBeats[64];
 	public:
-		void init();
+		void init(const std::string& fileName);
 		void update();
 		void cleanup();
 		bool isFrameBeat() const;
